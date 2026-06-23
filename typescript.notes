@@ -1,0 +1,37 @@
+syntax:
+ - case sensitive
+class AppComponent {
+    #giving the type
+    # number , string , boolean - primitive types
+    title: string = 'app';
+    #by default it can infer based on the field value
+    title = 'app';
+
+    # number[] , string[] , boolean[]
+    items: string[] = ['item1', 'item2']
+    itemas = ['item1','item2']
+
+    #methods/functions
+    #by default methods are public , need to add private access modifier
+    #can omit the return types they are infereable from what method returns
+    #no emicolon when one stmt in one line
+    private log(text: string): void{
+        var msg: string = 'Message' + text
+        console.log
+    }
+
+    #this -> the current object
+    f(){
+        this.log('a')
+    }
+}
+
+#creating object
+var app: AppComponent = new AppComponent()
+
+#interface
+export interface Appointment {
+    id: number,
+    title: string,
+    date: Date
+}

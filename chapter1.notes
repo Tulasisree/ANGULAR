@@ -1,0 +1,139 @@
+framework for building building  client applications in HTML,CSS,JS/Typescript
+
+Benefits:
+-> gives our applications a clean structure
+-> includes a lot of reusable code
+-> makes applns more testable
+-> hot reload - reloaded the page automatically
+Architecture:
+frontend (html,css,ang,js) <---HTTP---> backend(Data+APIs, businesslogic)
+API(application programming interface) :
+    endpoints that are accessible vis HTTP protocol
+
+Angular Application:
+Components :
+    -> what user can see and interact with, data binding happeniing between input fields
+    -> we can have multiple Components
+Services:
+    -> handles data
+    -> communicate with rest apis to load our data via db
+    -> spread the loaded data onfo to all our Components
+Modules:
+    -> encapsulation and structure
+
+SPA(Single page application):
+- Dwonload the application initially
+- update only what got changed
+- recues loading times and server load
+-> runs on a webserver -> requires node.js and npm
+
+stackblitzz
+
+Angular CLI:
+- this is a node package
+"npm install -g @angular/cli" -> -g for global installation
+"ng --version / ng v"
+
+creating angular project:
+"ng new hello-world"
+"ng serve -o"(opens the browser)
+
+angular.json:
+    - specify different configurations
+    - ex: prd env, local env, test env
+
+src :
+  - index.html: root fo  the appln
+  - <app-root></app-root> custom tag
+
+-------------------------------------------------------
+COMPONENTS:
+- main building block of your application
+app.ts:
+- @Component turns the class to the component
+@Component({
+  selector: 'app-root', #html selector used to render this component
+  templateUrl: './app.component.html', #component connected to this html (both ways)
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent { #export it so that we can import it in other modules#
+  title = 'appointment-app';
+  message = 'hello world'
+}
+
+generate a component:
+    - "ng g component appointment-list"
+Rendering component:
+- use the component selector in main html/component
+
+One-way Binding:
+    - display the content to show on the template(html)
+    - we use {{}}
+    - template:
+        {{message}}
+
+app.module.ts:
+    - decripcated in latest versions
+    - main configuration file in older Angular apps (NgModule-based architecture).
+
+Interface:
+    - "ng generate interface models/appointment"
+    - creates model folder with interface
+
+Adding functionaliy:
+Two-way data binding:
+html->component save value from iput we got in html to component
+- we need forms module for two way data binding
+in app.module.ts:
+- import { FormsModule } from '@angular/forms';
+- and then add it to imports so that components can use it
+    imports: [
+        BrowserModule,
+        FormsModule
+    ],
+- inside forms module we have "ngmodel" which we need for two way data binding
+- in html 
+    <input [(ngModel)]="newAppointmentTitle" placeholder="Appointement description">
+    <input [(ngModel)]="newAppointmentDate" type="date" placeholder="Appointement date">
+here newAppointmentTitle,newAppointmentDate from component are upadted to reflect the value the user has entered.
+
+looping functionality:
+ngFor:
+    - for looping in Aungulat temple we use directive called ngFor
+    <li *ngFor="let appointment of appointments">
+        {{appointment.id}}
+        {{appointment.title}}
+        {{appointment.date | date:'dd.MM.yyyy'}} <!-- pipe the date to the format dd.MM.yyyy-->
+    </li>
+    - ngFor gets notified from the nagular change detection eveytime a new appointment is added and with reloading adds the new item.
+
+delete functionality:
+    <li *ngFor="let appointment of appointments; index as i">
+        {{appointment.title}}{{appointment.date | date:'dd.MM.yyyy'}}
+        <button (click)="deleteAppointment(i)">Delete</button>
+    </li>
+
+storing data:
+- we can use dbs, currently for learning purpose using browser storage
+Localstorage:
+    - convert from typscript to json
+    /*key -> appointments, value->json data*/
+    - localStorage.setItem("appointments",JSON.stringify(this.appointments))
+
+ngOnInit:
+- load data when we reload the appn
+- when the component gets initiallized that is when we want to load data
+(all appointments stored laod when appointement component gets initialised, ie when appns starts or reloaded)
+LifeCycleHooks:
+    ngOnInit()
+    - import { OnInit } from '@angular/core';
+    - export class AppointmentListComponent implements OnInit{}
+    - we have to implement this lifecycle hook method otherwise error will be thrown
+        ngOnInit(): void {
+                throw new Error('Method not implemented.');
+            }
+
+BOOTSTRAP:
+"npm install bootstrap"
+styles.css:
+    @import "~bootstrap/dist/css/bootstrap.min.css"
