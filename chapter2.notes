@@ -1,0 +1,167 @@
+HOTEL-APP:
+    create reservation, list reservation, edit reservation, delete reservation
+    CRUD
+
+App root -> router -> (home component)
+                |-> (reservation form component, Reservation list component) <-> (Reservation service)
+
+ROOTER OUTLET:
+-> remove everything except <router-outlet></router-outlet> in app.component.html
+- shows whatever path we have navigated to
+- by using router we can display various components by assighihng routes to it.
+app-routing.module.ts:
+const routes: Routes = [
+  {path: "",component: HomeComponent},
+  {path: "list",component: ReservationListComponent},
+  {path: "new",component: ReservationFormComponent}
+];
+
+Module:
+- "ng generate module home" / "ng g m .."
+- generate home component in home module
+    "ng g c home --module=home"
+- a component can have only one module
+- we need to provide all modules that we create under main app.module.ts
+
+Service:
+creates reservation service under reservation folder
+"ng generate service reservation/reservation"
+
+create reservation interface:
+"ng g i models/reservation"
+
+-------------------------------
+NAVIGATION MENU:
+
+<div>
+    <h2> Welcome to Hotel  Reservation Portal </h2>
+    <button [routerLink]="['/new']">Create a new reservation</button>
+    <button [routerLink]="['/list']"> View all Reservations</button>
+</div>
+
+- to use the routerLinnk we need to import it to our module
+"import { RouterModule } from '@angular/router';" home.module.ts
+
+--------------------------------
+RSERVATION FORM:
+- we are using form module , so import it 
+"import { FormsModule, ReactiveFormsModule } from '@angular/forms';" reservation.module.ts
+ReactiveFormsModule:
+    Validate Form in Typescript class
+Template-Driven Form Validation:
+    Validate Form in HTML Template
+
+reservation-form.component.ts:
+"import { FormBuilder, FormGroup, Validators } from '@angular/forms';"
+
+- form input needs to have formControlName , so that we can use form group and form builder to grab the value of i/p field
+    <input type="date" formControlName="checkInDate">
+
+FORM VALIDATION:
+    - FromBuilder -> groups all i/p fields together
+    - add validations Oninit() of the component
+    - Dependency Injection: we have system in Angulat tha t says i know ur reservation component want to have FormBuilder,
+        Angular DJ does that, create a FromBuilder instance and submits it to the constructor
+        constructor(private fromBuilder:FormBuilder, ){}
+        ngOnInit(): void {
+            this.reservationForm = this.fromBuilder.group({
+            /* names shd be same the one we picked for formControlName in form*/
+            checkInDate: ['',Validators.required],
+            checkOutDate: ['',Validators.required],
+            guestName: ['',Validators.required],
+            guestEmail: ['',[Validators.required, Validators.email]],
+            roomNumber: ['',Validators.required],
+            })
+        }
+
+Dynamic toggle html attributes based on form state:
+- Disable submit if form is invalid
+<button type="Submit" [disabled]="reservationForm.invalid">Submit</button>
+
+Validation messages:
+- "ngIf" directive to create if statements
+- if the input is invalid and its touched(don't show from the beginning, dhow msg once its been touched/accessed)
+<div *ngIf="reservationForm.get('checkInDate')?.invalid && reservationForm.get('checkInDate')?.touched">
+            CheckIn data is required</div>
+
+-------------------------------------
+RESERVATION SERVICE:
+- place where we want to handle the data (CRUD OPERATIONS)
+-> @Inejactable makes the reservation service inject into a constructor. 
+- Where ever we need reservation service we can simply go into the constructor of another class and 
+     use angular dependeny injection to inject instance of reservation service
+        @Injectable({
+            providedIn: 'root'
+        })
+        export class ReservationService {
+            //CRUD OPS
+        }
+
+--------------------------------------
+RESERVATION LIST:
+show the list of reservations using getReservations from ReservationService
+
+ngtemplate and localReference:
+- ng template doesnt get rendered by default , it needs to get activated. 
+Here we are using local Reference noReservation which gets activated when there reservations.length =0
+        <ul *ngIf="reservations.length; else noReservation">
+            <li *ngFor="let reservation of reservations">...</li>
+        </ul>
+
+        <ng-template #noReservation>
+            <p>No Reservation Available</p>
+        </ng-template>
+
+---------------------------------------
+
+Router Navigate method to redirect the user:
+    import { Router } from '@angular/router';
+    constructor(
+            private router: Router
+        ){}
+    onSubmit(){
+        ...
+      this.router.navigate(['list'])
+    }
+
+---------------------------------------
+DELETE RESERVATION:
+on list page.
+---------------------------------------
+
+CREATING UNIQUE IDS:
+- our system shd produce the id (usually the primary key)
+- in this p-roject since we are dont using db, we are doing it in addReservation using time.now()
+
+EDIT RESERVATION:
+    - {path: "edit/:id",component: ReservationFormComponent}
+    - go to ngOnInit lifecycle hook and check if  we are at the edit endpoint so that we know we need to fill reservation form
+    - Activated route has the values of the current route
+    "import { ActivatedRoute } from '@angular/router';"
+    - Fill the form if we have id param in route:
+        let id = this.activatedRoute.snapshot.paramMap.get('id')
+        if(id){
+        let reservation = this.reservationService.getReservation(id)
+        if(reservation)
+            this.reservationForm.patchValue(reservation)
+        }
+    - call updte onSubmit
+        let id = this.activatedRoute.snapshot.paramMap.get('id')
+        if(id){
+            this.reservationService.updateReservation(id,reservation);
+        }else{
+            this.reservationService.addReservation(reservation);
+        }
+
+--------------------------------
+COMBINING COMPONENTS OF DIFFERENT MODUELS:
+- import the module1 which contains the component that you want to use.
+- allow that module1 to be imported by exporting it from its module
+Home.module.ts:
+    exports:[
+    HomeComponent
+  ]
+reservation.module.ts:
+  imports: [
+    HomeModule
+    ]
