@@ -62,7 +62,7 @@ export class AppComponent { #export it so that we can import it in other modules
 }
 
 generate a component:
-    - "ng g component appointment-list"
+    - "ng generate component appointment-list" / " ng g c .."
 Rendering component:
 - use the component selector in main html/component
 
