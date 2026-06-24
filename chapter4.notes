@@ -1,0 +1,132 @@
+ECOMM APP - AMAZING ANIMAL PAINTING:
+- ng g module product
+- ng g service product/product (product service connected to product module)
+- ng g component product/product-list
+
+Class:
+- "ng g class models/product"
+creates product class under models folder
+
+-> redirect home to products
+const routes: Routes = [
+  {path:'', redirectTo:'/products',pathMatch:'full'},
+  {path:'products',component:ProductListComponent}
+];
+
+ENVIRONMENTS:
+- since ang v15 , they are not getting created automatically
+- "ng g environments"
+- environments/environment.development.ts:
+    export const environment = {
+        apiUrl: 'http://localhost:3000'
+    };
+in angular.json:
+    - we can see in development env replaces .ts with development.ts
+            "development": {
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.development.ts"
+                }
+            }
+
+to start env in diff configurations:
+- "ng serve --configuration=development"
+
+Angular Materials and exporting Cards:
+(angular.material.dev)
+    - angular material imporves styling and user exp.
+    "ng add @angular/material"
+
+    - when we want to use any angular material component, we have to pick the module where we want to import it
+    (check api for that component , can copy paste the import from website directly)
+        import {MatCardModule} from '@angular/material/card';
+    
+    -in html:
+        <mat-card class="product-card">....
+
+Images:
+assets/images
+
+To use angular material theme:
+    - check angular.json for styles:
+        "styles": [
+              "@angular/material/prebuilt-themes/indigo-pink.css",
+              "src/styles.css"
+            ],
+    - import it to styles.css (global) 
+        @import "@angular/material/prebuilt-themes/indigo-pink.css";
+
+Responsive Grids:
+- angular meterial grids doesnt have responsiveness
+- we can use flexLayout https://github.com/angular/flex-layout 
+(NOW UNMAINTAINED) USE CSS GRIDS
+
+Hover effect:
+    mat-card:hover{
+        transform: scale(1.05);
+        cursor: pointer;
+    }
+    mat-card {
+        transition: transform .2s;
+    }
+
+Navigation bar:
+"import {MatToolbarModule} from '@angular/material/toolbar';"
+Button:
+import {MatButtonModule} from '@angular/material/button';
+
+CART:
+- ng g module cart  
+- ng g service cart/cart
+- ng g c cart/cart-view
+
+mat-list:
+- listing cart times
+
+snack-bar:
+    - for popup
+    addToCart(product:Product):void{
+        this.cartService.addToCart(product).subscribe({
+        //when the addtocart got sent and returned successfull next...
+        next: () =>{
+            this.snackBar.open("Product added to Cart!","",{
+            duration: 2000,
+            horizontalPosition: 'right',
+            verticalPosition: 'top'
+            })
+        }
+        });
+    }
+
+Filter functionality:
+    - filter the items depening on the input
+    - oninit it contains all items since no filter is applied
+    - using MatInputModule for html functionality
+        -dynamic , applied when we stop writing on input(keyup) , filters dynamically
+        <mat-form-field>
+            <input matInput (keyup)="applyFilter($event)" placeholder="Search">
+        </mat-form-field>
+
+    applyFilter(event:Event): void{
+        let searchTerm = (event.target as HTMLInputElement).value;
+        searchTerm = searchTerm.toLowerCase();
+        this.filteredProducts = this.products.filter(
+            product => product.name.toLowerCase().includes(searchTerm)
+        )
+    }
+
+Sort functionality:
+    - uses MatSelectModule
+    <mat-select (selectionChange)="sortProducts($event.value)">
+        <mat-option value="priceLowHigh">Price: Low to High</mat-option>
+        <mat-option value="priceHighLow">Price: High to Low</mat-option>
+    </mat-select>
+
+    sortProducts(sortValue:string): void{
+        this.sortOrder = sortValue;
+        if(this.sortOrder == "priceLowHigh"){
+            this.filteredProducts.sort((a,b) => a.price - b.price)
+        }else if(this.sortOrder == "priceHighLow"){
+            this.filteredProducts.sort((a,b) => b.price - a.price) 
+        }
+    }
