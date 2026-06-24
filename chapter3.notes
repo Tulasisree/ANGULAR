@@ -1,0 +1,37 @@
+HTTP REQUEST TYPES:
+GET, POST(CREATE), DELETE, PUT(UPDATE)
+
+HTTP RESPONSE TYPES:
+2xx - OK (Successful)
+3xx - Redirection
+4xx - Client Errors
+5xx - Server Errors
+
+MOCK BACKEND API:
+mock api -> mockoon
+
+HTTPCLIENT AND OBSERVABLES:
+ - to send http request and wait for result from backend
+    - Add HttpClientModule to app.module.ts "import {HttpClientModule} from '@angular/common/http';"
+    - import { HttpClient } from '@angular/common/http'; in our reservation service
+    - import { Observable } from 'rxjs';
+
+Observable:
+    - its an asynchronous way on how we can wait for a result
+    - every request we send to external api might take some time to respond
+    - we create a observale, [ we send the request out and we are waiting ]
+    - every method that calls the method which returns obervable subscribes to the observale just like an event.
+    - we subsribe to it and wait for the result
+    - once the request is processed and we get the result, everyone who subscribed to the Observable will get notified and move forward with result.
+    
+    All methods that call getReservation will subsribe to the Observal that can return Reservation array
+    getReservations(): Observable<Reservation[]>{
+            // return this.reservations;
+            return this.http.get<Reservation[]>(this.apiUrl + "/reservations")
+        }
+    Reservation-list.component.ts:
+        ngOnInit(): void {
+            this.reservationService.getReservations().subscribe( reservations => {
+                this.reservations = reservations
+            });
+         }
