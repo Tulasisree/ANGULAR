@@ -1,0 +1,156 @@
+Problem:
+ Fetching data is required tp update the states
+ Data inconsistency because of dependencies or multiple sources of truth(e.g multiple services)
+ Complex data flow which is hard to understand, track and debug
+-> solution is to use Global State fr reusing data
+NgRx:
+    Building reactive appns with a single state
+    reactive -> respond to changes
+
+-> checkout NgRxLifecycle.png
+STORE:
+    Hold the application State(immutable- cannot get changed directly)
+ACTIONS:
+    Events that modify  the state in the STORE
+REDUCERS:
+    Functions that take actions and modify the state base on the action type
+EFFECTS:
+    Handle asynchronous operations(like fetching data from a server) and then trigger new actions
+
+One-way data flow:
+Actions ➔ Reducers ➔ Updated State -> Selectors share updates
+The updated state is automatically passed to the components via selectors(components subscribe to the selector)
+
+node packages:
+    "npm install @ngrx/store @ngrx/effects"
+
+CREATING STATE:
+    think about the entity
+    - created globally
+    "ng g i app.state"  //creates interface AppState
+    - its immutable
+    - we use Reducers/actions to modify state
+    - In this project: we want to store imfo of book in our AppState
+        readonly book: Book[]
+    - State shd be registered inside a store
+
+CREATING ACTIONS:
+    - create books/book.actions.ts under app
+    "import { createAction,props } from '@ngrx/store';"
+                            props for properties of the book
+    export const AddBook = createAction('[Book] Add Book',props<Book>())
+    - we are exporting Addbook action, which requires Book to perform the action
+        the first argument is type , and u can name it as u like
+    - SUCESS AND FAILURE ACTION:
+    export const AddBookSuccess = createAction('[Book] Add Book Successfully',props<Book>())
+    export const AddBookFailure = createAction('[Book] Add Book Failure',props<{error:any}>())
+    
+CREATING REDUCER:
+    - processes the actions
+    - its called a reducer becoz it reduces the {current state , action} to new state
+    - create book/book.reducer.ts
+    "import { createReducer, on } from '@ngrx/store';"
+    - import the actions is need to process
+        import { AddBook,RemoveBook } from "./book.actions";
+    - AppState can contain different states like book, User , etc.
+    - Reducer is specific to one state i.e BookReducer, User will have its own Reducer
+       i.e Reducer takes care of only segmet of the AppState not whole.
+    - Reducer always needs a initial state
+        export const initalState: ReadonlyArray<Book> = [];
+    - Reducer flow:
+    Copy current state segmet -> make changes -> return new state
+    - we use "on" to register actions for this reducer
+    export const BookReducer = createReducer(
+            //as said before reducer needs initial state to make changes on and return new state
+        initalState,
+            //inside createReducer we can use "state", this state is not the global state
+            //its is the current segment of the state that this reducer shd take care of
+            //we take the current state and what we need to add then..
+            // we want to create an array 
+            // ...state -> copies all the elements from old state into the array
+            // and the new book to add
+        on(AddBook,(state, {id,title,author}) => [...state, {id,title,author}]),
+            //bookId same as we given in the RemoveBook action props<{bookId:string}>()
+            //filter returns new state where the array contains books != bookId
+        on(RemoveBook,(state,{bookId}) => state.filter(book => book.id != bookId))
+    );
+
+CREATING STORE:
+    - its a global store, import in app.module.ts
+        "import { StoreModule } from '@ngrx/store';"
+    - we need to specify the reducer im the root level
+        (app.module.ts)
+        //tells store to use BookReducer to manage all state changes to book(we defined this in state)
+            StoreModule.forRoot({book: BookReducer})
+
+DISPATCH ACTIONS:
+    - we start action disptach from within components
+    "ng g c book-list"
+    constructor(private store: Store<{books: Book[]}>){}
+    addBook(id:string,title:string,author:string){
+        //dispatch -> to start an action
+        this.store.dispatch(AddBook({id,title,author}))
+    }
+
+LOADING BOOKS FROM STORE:
+    - we create property of type Observable, so as soon as we add books, remove books using 
+        our actions which get processed by reducer which changes the state, we will get notified
+        as we subscribed to it.
+        booklist component:
+            books$ : Observable<Book[]>;
+            this.books$ = store.pipe(select('books'))
+
+Using AppState interface for Type safety:
+    - we have used book in AppState but used books in component 
+    which will break functionality. We can use AppState instead of naming everywhere
+    - in booklist component:
+        constructor(private store: Store<AppState>){
+            this.books$ = store.pipe(select('book'))
+        }
+    - in app module
+        StoreModule.forRoot<AppState>({book: BookReducer}),
+    - also remove readonly from reducer initialState
+    Readonly is not needed as in the createReducer bloxk we are making sure sure that we are not mofidying the state but 
+    using it to create new state
+        export const initalState: Book[] = [];
+
+HTML NOTES:
+    here #bookId is reference and we are using it to pass value to addBook()
+    <input #bookId type="text" placeholder="Book Id">
+    <input #bookTitle type="text" placeholder="Book Title">
+    <input #bookAuthor type="text" placeholder="Author">
+    <button (click)="addBook(bookId.value,bookTitle.value,bookAuthor.value)"></button>
+
+Adjusting reducer for effects:
+    - add book shd not modify the state directly, when called effect will call a service to 
+        add book which connects with db(api) and send the response if success/failure
+
+creating service:
+    "ng g service books/book"
+    of -> create Observable
+
+CREATING EFFECTS:
+ - create books/books.effects.ts
+ //we have created an effect which will specifically run when action of type AddBook ocures
+    addBook$ = createEffect(() => this.actions$.pipe(
+        ofType(bookActions.AddBook),
+        //what to do when this action occures
+        //here action is book (props)
+        //mergeMap helps us to take observables and transform to single observable
+        mergeMap((action) => this.bookService.addBook(action)
+            .pipe(
+                //pipe to say we have something do after book service returns something
+                //bookService addBook will return book observable which we are mapping to AddBookSuccess Action
+                map(book => bookActions.AddBookSuccess(book)),
+                catchError((error) => of(bookActions.AddBookFailure({error})))
+            ))
+    ))
+
+REGISTERING THE EFFECT:
+(in app module)
+ EffectsModule.forRoot([BookEffects])
+
+ANGULAR DEV TOOLS, REDUX CHROME EXTENSION for inspecting the effects,actions
+to used that u need to install
+"npm install @ngrx/store-devtools"
+StoreDevtoolsModule.instrument() in app modules.js
