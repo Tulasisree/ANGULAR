@@ -1,0 +1,36 @@
+Angular testing tools:
+- Jasmine framework for writing and organizing unit testst in a clean and readable f0rmat
+- karma framework to run tests and receive test reports
+- .spec.ts files.
+
+How Angular Unit tests work:
+- writing test suits(collection of test cases)
+- defining specs(individual test case withihn suits)
+- making assertions(ckecking if a particular condn is met)   
+
+- "ng test" -> starts karma test runner and runs all unit tests in the project
+
+"describe(componentname,function)" -> contains tests for that component
+inside function we use "it()" to write the tests
+
+describe('AppComponent',() => {
+  it('should have a defined title', () => {
+    //assertion
+    const component = new AppComponent();
+    expect(component.title).toBeDefined();
+  });
+});
+
+TestBed:
+- main api we use to write unit tests
+
+  //for each unit beforeEach() will be executed first
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    service = TestBed.inject(UserService);
+  })
+
+Fixtures:
+- wrapper for the component which has additional functionalities that we can use
+let fixture: ComponentFixture<UserListComponent>;
+check user-List.Component.spec.ts
